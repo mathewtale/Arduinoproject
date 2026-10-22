@@ -1,0 +1,137 @@
+﻿@page "/demo"
+@using Arduinoproject.Models
+@inject DbService DbService
+
+<PageTitle>Quiz Demo</PageTitle>
+
+<h3>Quiz Demo</h3>
+
+@if (isLoading)
+{
+    <p>Loading questions...</p>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <p style="color: red;">@errorMessage</p>
+}
+else if (quizzes.Count == 0)
+{
+    <p>No questions found.</p>
+}
+else if (currentIndex >= quizzes.Count)
+{
+    <h4>Quiz completed!</h4>
+    <p>Your score: @correctAnswers / @quizzes.Count</p>
+
+    <button @onclick="RestartQuiz">Try again</button>
+}
+else
+{
+    var quiz = quizzes[currentIndex];
+
+    <div style="max-width: 600px; padding: 20px; border: 1px solid #ccc; border-radius: 8px;">
+        <p>Question @(currentIndex + 1) of @quizzes.Count</p>
+
+        <h4>@quiz.Question</h4>
+
+        @foreach (var answer in GetAnswers(quiz))
+        {
+            <button @key="answer"
+                    disabled="@hasAnswered"
+                    @onclick="() => SelectAnswer(answer)"
+                    style="display: block; width: 100%; text-align: left; padding: 10px; margin: 8px 0; border: 1px solid #aaa; border-radius: 5px; cursor: pointer;">
+                @answer
+            </button>
+        }
+
+        @if (hasAnswered)
+        {
+            @if (isCorrect)
+            {
+                <p style="color: green; font-weight: bold;">Correct!</p>
+            }
+            else
+            {
+                <p style="color: red; font-weight: bold;">Incorrect!</p>
+                <p>Correct answer: @quiz.CorrectAnswer</p>
+            }
+
+            <button @onclick="NextQuestion">
+                @(currentIndex == quizzes.Count - 1 ? "Finish quiz" : "Next question")
+            </button>
+        }
+    </div>
+}
+
+@code {
+    private List<Quizsave> quizzes = new();
+    private int currentIndex;
+    private int correctAnswers;
+    private string? selectedAnswer;
+    private bool hasAnswered;
+    private bool isCorrect;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            quizzes = await DbService.GetAllQuizes();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load questions: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string[] GetAnswers(Quizsave quiz)
+    {
+        return new[]
+        {
+        quiz.Answer1,
+        quiz.Answer2,
+        quiz.Answer3,
+        quiz.CorrectAnswer ?? string.Empty
+    };
+    }
+
+    private void SelectAnswer(string answer)
+    {
+        if (hasAnswered)
+            return;
+
+        selectedAnswer = answer;
+
+        isCorrect = string.Equals(
+            selectedAnswer?.Trim(),
+            quizzes[currentIndex].CorrectAnswer?.Trim(),
+            StringComparison.OrdinalIgnoreCase);
+
+        if (isCorrect)
+            correctAnswers++;
+
+        hasAnswered = true;
+    }
+
+    private void NextQuestion()
+    {
+        currentIndex++;
+        selectedAnswer = null;
+        hasAnswered = false;
+        isCorrect = false;
+    }
+
+    private void RestartQuiz()
+    {
+        currentIndex = 0;
+        correctAnswers = 0;
+        selectedAnswer = null;
+        hasAnswered = false;
+        isCorrect = false;
+    }
+}
