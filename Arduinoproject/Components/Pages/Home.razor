@@ -1,7 +1,32 @@
 ﻿@page "/"
 
 <PageTitle>Home</PageTitle>
-
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
+questions = new List<questions>();
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Question</th>
+      <th scope="col">Category</th>
+      <th scope="col">Answers</th>
+      <th scope="col">Correct Answer</th>
+    </tr>
+  </thead>
+    foreach (var question in questions)
+    {
+    <tr>
+        <th scope="row">@question.Id</th>
+        <td>@question.QuestionText</td>
+        <td>@question.Category</td>
+        <td>
+            <ul>
+                @foreach (var answer in question.Answers)
+                {
+                    <li>@answer</li>
+                }
+            </ul>
+        </td>
+        <td>@question.CorrectAnswer</td>
+    </tr>
+    }
+  </table>
