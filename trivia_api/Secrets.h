@@ -1,0 +1,3 @@
+#define SECRET_SSID "MAGS-OLC"
+#define SECRET_PASS "Merc1234!"
+#define API_IP_ADDRESS "192.168.1.110"
